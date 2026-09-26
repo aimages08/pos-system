@@ -1,0 +1,32 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Setting extends Model
+{
+    protected $fillable = ['key', 'value', 'group'];
+
+    /**
+     * Get a setting value by key.
+     */
+    public static function get(string $key, $default = null)
+    {
+        return cache()->rememberForever("setting.$key", function () use ($key, $default) {
+            return static::where('key', $key)->value('value') ?? $default;
+        });
+    }
+
+    /**
+     * Set a setting value.
+     */
+    public static function set(string $key, $value, string $group = 'general'): void
+    {
+        static::updateOrCreate(
+            ['key' => $key],
+            ['value' => $value, 'group' => $group]
+        );
+        cache()->forget("setting.$key");
+    }
+}
